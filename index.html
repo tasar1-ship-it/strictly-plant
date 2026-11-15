@@ -91,6 +91,29 @@ dd{margin:3px 0 0;font-size:.95rem;color:var(--muted)}
 .pri{display:inline-block;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 6px;border-radius:5px;margin-left:6px;vertical-align:2px}
 .pri.must{background:var(--bad-soft);color:var(--bad)}
 .pri.watch{background:var(--warn-soft);color:var(--warn)}
+/* questionnaire */
+.quiz{background:var(--surface);border:1.5px solid var(--line);border-top:4px solid var(--accent);border-radius:14px;padding:20px;display:grid;gap:18px}
+.quiz-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px 16px}
+.quiz-head p{margin:4px 0 0;color:var(--muted);font-size:.95rem;max-width:60ch}
+.progress{font-size:.9rem;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.qs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px 26px}
+fieldset.q{border:0;margin:0;padding:0;display:grid;gap:8px;min-width:0}
+fieldset.q legend{font-weight:600;padding:0;margin-bottom:8px}
+fieldset.q legend span{color:var(--accent);margin-right:6px;font-variant-numeric:tabular-nums}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opt input{position:absolute;opacity:0;pointer-events:none}
+.opt span{display:inline-block;font-size:.9rem;font-weight:500;padding:6px 13px;border-radius:999px;border:1.5px solid var(--line);background:var(--chip);color:var(--ink);cursor:pointer}
+.opt input:checked + span{background:var(--accent);border-color:var(--accent);color:#1a0d13;font-weight:700}
+.opt input:focus-visible + span{outline:2px solid var(--accent);outline-offset:2px}
+.result{border-radius:12px;background:var(--accent-soft);padding:16px 18px;display:grid;gap:10px}
+.result h3{font-size:1.35rem;color:var(--ink)}
+.result .badges{display:flex;flex-wrap:wrap;gap:6px}
+.result .badges b{font-size:.8rem;padding:3px 10px;border-radius:999px;background:var(--surface);color:var(--accent)}
+.result ul{margin:0;padding-left:20px;display:grid;gap:4px}
+.result p{margin:0}
+.qbtns{display:flex;flex-wrap:wrap;gap:8px}
+.qbtn{font:inherit;font-size:.9rem;font-weight:600;padding:7px 14px;border-radius:10px;border:1.5px solid var(--accent);background:transparent;color:var(--ink);cursor:pointer}
+.qbtn.primary{background:var(--accent);color:#1a0d13}
 footer{font-size:.8rem;color:var(--muted);max-width:75ch}
 mark{background:var(--accent-soft);color:inherit;border-radius:3px;padding:0 1px}
 @media (prefers-reduced-motion:no-preference){.chip,.toggle{transition:background .15s,color .15s}}
@@ -105,6 +128,18 @@ mark{background:var(--accent-soft);color:inherit;border-radius:3px;padding:0 1px
     <p>Everything on the category lists is plant-only. Tick <b>Raw only</b> for a raw-vegan view. The three panels at the bottom cover the foods that need a label check, the additives that are never vegan, and the nutrients a strict plant diet has to cover on purpose.</p>
     <div class="stats" id="stats"></div>
   </header>
+
+  <section class="quiz" id="quiz" aria-labelledby="quiz-title">
+    <div class="quiz-head">
+      <div>
+        <h2 id="quiz-title">What kind of vegan are you cooking for?</h2>
+        <p>Answer seven quick questions about your guest. The result tells you how strict to be and what to watch for.</p>
+      </div>
+      <span class="progress" id="qprog">0 of 7 answered</span>
+    </div>
+    <form class="qs" id="qform"></form>
+    <div class="result" id="qresult" hidden></div>
+  </section>
 
   <div class="controls">
     <div class="row">
@@ -278,6 +313,84 @@ $("#chips").addEventListener("click",e=>{
 $("#q").addEventListener("input",render);
 $("#raw").addEventListener("change",render);
 renderChips(); render();
+
+/* ---------- questionnaire ---------- */
+// s = strictness points, flags set raw / whole-food / motive
+const QS = [
+  {id:"honey", q:"Do they eat honey?", o:[["Yes",{s:0}],["Not sure",{s:1}],["No, never",{s:2}]]},
+  {id:"labels", q:"Do they check labels for hidden animal additives (gelatin, whey, carmine)?", o:[["No",{s:0}],["Sometimes",{s:1}],["Always",{s:2}]]},
+  {id:"traces", q:"Is \"may contain milk or egg\" a problem?", o:[["No, that's fine",{s:0}],["Prefer to avoid",{s:1}],["Yes, a deal-breaker",{s:2}]]},
+  {id:"wine", q:"Wine and beer?", o:[["Any is fine",{s:0}],["Only vegan-labelled",{s:2}],["They don't drink",{}]]},
+  {id:"nonfood", q:"Do they avoid leather, wool or animal-tested cosmetics?", o:[["No",{s:0}],["Some of it",{s:1}],["All of it",{s:2}]]},
+  {id:"cooked", q:"Do they eat cooked food?", o:[["Yes, anything",{}],["Mostly raw",{raw:1}],["Only raw",{raw:2}]]},
+  {id:"processed", q:"Vegan burgers, plant cheese, added oil?", o:[["Happily",{}],["Prefer whole foods",{wf:1}],["None, no oil at all",{wf:2}]]},
+];
+let answers = {};
+try { answers = JSON.parse(localStorage.getItem("sp-quiz") || "{}") || {}; } catch(e){ answers = {}; }
+for (const k of Object.keys(answers)) { const q = QS.find(x=>x.id===k); if (!q || !q.o[answers[k]]) delete answers[k]; }
+
+$("#qform").innerHTML = QS.map((q,qi)=>`<fieldset class="q"><legend><span>${qi+1}</span>${esc(q.q)}</legend><div class="opts">${
+  q.o.map((o,oi)=>`<label class="opt"><input type="radio" name="${q.id}" id="q-${q.id}-${oi}" value="${oi}"${answers[q.id]===oi?" checked":""}><span>${esc(o[0])}</span></label>`).join("")
+}</div></fieldset>`).join("");
+
+function quizResult(){
+  const n = QS.filter(q=>answers[q.id]!==undefined).length;
+  $("#qprog").textContent = `${n} of ${QS.length} answered`;
+  const box = $("#qresult");
+  if (n < QS.length) { box.hidden = true; return; }
+  let s=0, max=0, raw=0, wf=0;
+  for (const q of QS){
+    const v = q.o[answers[q.id]][1];
+    if (v.s!==undefined){ s+=v.s; max+=2; }
+    raw = Math.max(raw, v.raw||0); wf = Math.max(wf, v.wf||0);
+  }
+  const pct = max ? s/max : 0;
+  let type, tips;
+  if (pct >= .75){
+    type = "Strict ethical vegan";
+    tips = ["No honey anywhere, including dressings and glazes.",
+            "Read every label: watch the additives list at the bottom of this page.",
+            "Serve only wine or beer marked vegan; use beet or organic sugar.",
+            "Keep their food apart from meat and dairy pans and utensils."];
+  } else if (pct >= .35){
+    type = "Dietary vegan";
+    tips = ["No meat, fish, dairy or eggs on the plate.",
+            "Obvious ingredients matter most; traces are usually fine.",
+            "Ask once about honey and wine rather than guessing."];
+  } else {
+    type = "Plant-based, flexible";
+    tips = ["Cook plant-based meals; small hidden traces are not a problem.",
+            "Honey and ordinary wine are usually fine.",
+            "Focus on a satisfying meal: beans, tofu or tempeh for protein."];
+  }
+  const badges = [type];
+  if (raw===2){ badges.push("Fully raw"); tips.push("Serve nothing heated: salads, sprouts, nuts, fruit, raw sauces. The Raw only filter shows what works."); }
+  else if (raw===1){ badges.push("High-raw"); tips.push("Lead with raw dishes; a cooked side is usually fine."); }
+  if (wf===2){ badges.push("Whole-food, no oil"); tips.push("No added oil and no ready-made vegan products: steam, bake or sauté in water."); }
+  else if (wf===1){ badges.push("Whole-food leaning"); tips.push("Prefer beans, grains and vegetables over vegan burgers and plant cheese."); }
+  box.innerHTML = `<div class="badges">${badges.map(b=>`<b>${esc(b)}</b>`).join("")}</div>
+    <h3>${esc(badges.join(" · "))}</h3>
+    <ul>${tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>
+    <div class="qbtns">${raw===2?`<button type="button" class="qbtn primary" id="q-apply">Show raw foods only</button>`:""}
+    <button type="button" class="qbtn" id="q-reset">Start again</button></div>`;
+  box.hidden = false;
+}
+$("#qform").addEventListener("change",e=>{
+  const t=e.target; if(t.type!=="radio") return;
+  answers[t.name]=Number(t.value);
+  try{localStorage.setItem("sp-quiz",JSON.stringify(answers))}catch(err){}
+  quizResult();
+});
+$("#qresult").addEventListener("click",e=>{
+  if(e.target.id==="q-reset"){
+    answers={}; try{localStorage.removeItem("sp-quiz")}catch(err){}
+    document.querySelectorAll("#qform input").forEach(i=>i.checked=false); quizResult(); $("#quiz").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  if(e.target.id==="q-apply"){
+    $("#raw").checked=true; render(); $("#grid").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+});
+quizResult();
 </script>
 </body>
 </html>
