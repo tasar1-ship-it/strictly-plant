@@ -133,7 +133,7 @@ mark{background:var(--accent-soft);color:inherit;border-radius:3px;padding:0 1px
     <div class="quiz-head">
       <div>
         <h2 id="quiz-title">What kind of vegan are we cooking for?</h2>
-        <p>Answer seven quick questions about our guest. The result tells us how strict to be and what to watch for.</p>
+        <p>Seven quick questions for our guest. The result tells us how strict to be and what to watch for.</p>
       </div>
       <span class="progress" id="qprog">0 of 7 answered</span>
     </div>
@@ -317,12 +317,12 @@ renderChips(); render();
 /* ---------- questionnaire ---------- */
 // s = strictness points, flags set raw / whole-food / motive
 const QS = [
-  {id:"honey", q:"Do they eat honey?", o:[["Yes",{s:0}],["Not sure",{s:1}],["No, never",{s:2}]]},
-  {id:"labels", q:"Do they check labels for hidden animal additives (gelatin, whey, carmine)?", o:[["No",{s:0}],["Sometimes",{s:1}],["Always",{s:2}]]},
+  {id:"honey", q:"Do you eat honey?", o:[["Yes",{s:0}],["Not sure",{s:1}],["No, never",{s:2}]]},
+  {id:"labels", q:"Do you check labels for hidden animal additives (gelatin, whey, carmine)?", o:[["No",{s:0}],["Sometimes",{s:1}],["Always",{s:2}]]},
   {id:"traces", q:"Is \"may contain milk or egg\" a problem?", o:[["No, that's fine",{s:0}],["Prefer to avoid",{s:1}],["Yes, a deal-breaker",{s:2}]]},
-  {id:"wine", q:"Wine and beer?", o:[["Any is fine",{s:0}],["Only vegan-labelled",{s:2}],["They don't drink",{}]]},
-  {id:"nonfood", q:"Do they avoid leather, wool or animal-tested cosmetics?", o:[["No",{s:0}],["Some of it",{s:1}],["All of it",{s:2}]]},
-  {id:"cooked", q:"Do they eat cooked food?", o:[["Yes, anything",{}],["Mostly raw",{raw:1}],["Only raw",{raw:2}]]},
+  {id:"wine", q:"Wine and beer?", o:[["Any is fine",{s:0}],["Only vegan-labelled",{s:2}],["I don't drink",{}]]},
+  {id:"nonfood", q:"Do you avoid leather, wool or animal-tested cosmetics?", o:[["No",{s:0}],["Some of it",{s:1}],["All of it",{s:2}]]},
+  {id:"cooked", q:"Do you eat cooked food?", o:[["Yes, anything",{}],["Mostly raw",{raw:1}],["Only raw",{raw:2}]]},
   {id:"processed", q:"Vegan burgers, plant cheese, added oil?", o:[["Happily",{}],["Prefer whole foods",{wf:1}],["None, no oil at all",{wf:2}]]},
 ];
 let answers = {};
