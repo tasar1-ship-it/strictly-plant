@@ -25,7 +25,9 @@
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6}
 .wrap{max-width:1180px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
 h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
-h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;letter-spacing:-.02em;line-height:1.05}
+h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;letter-spacing:-.02em;line-height:1.05;color:#4ade80}
+@keyframes blink-green{0%,100%{color:#4ade80;text-shadow:0 0 18px rgba(74,222,128,.55)}50%{color:#166534;text-shadow:none}}
+@media (prefers-reduced-motion:no-preference){h1{animation:blink-green 1.6s ease-in-out infinite}}
 h2{font-size:1.45rem;font-weight:800;letter-spacing:-.01em}
 h3{font-size:1.1rem;font-weight:600}
 .eyebrow{font-size:.75rem;text-transform:uppercase;letter-spacing:.09em;color:var(--accent);font-weight:600}
@@ -95,6 +97,12 @@ dd{margin:3px 0 0;font-size:.95rem;color:var(--muted)}
 .quiz{background:var(--surface);border:1.5px solid var(--line);border-top:4px solid var(--accent);border-radius:14px;padding:20px;display:grid;gap:18px}
 .quiz-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px 16px}
 .quiz-head p{margin:4px 0 0;color:var(--muted);font-size:.95rem;max-width:60ch}
+.wa-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:12px}
+.wa{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:.95rem;padding:9px 16px;border-radius:999px;background:#25d366;color:#0b1f12;text-decoration:none}
+.wa::before{content:"";width:10px;height:10px;border-radius:50%;background:#0b1f12}
+.wa[aria-disabled="true"]{opacity:.45;cursor:not-allowed}
+.wa:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.wa-hint{font-size:.88rem;color:var(--muted)}
 .progress{font-size:.9rem;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
 .qs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px 26px}
 fieldset.q{border:0;margin:0;padding:0;display:grid;gap:8px;min-width:0}
@@ -134,6 +142,10 @@ mark{background:var(--accent-soft);color:inherit;border-radius:3px;padding:0 1px
       <div>
         <h2 id="quiz-title">What kind of vegan are we cooking for?</h2>
         <p>Seven quick questions for our guest. The result tells us how strict to be and what to watch for.</p>
+        <div class="wa-row" id="wa-row" hidden>
+          <a class="wa" id="wa" href="#" target="_blank" rel="noopener" aria-disabled="true">Send my answers on WhatsApp</a>
+          <span class="wa-hint" id="wa-hint">Answer all 7 questions first.</span>
+        </div>
       </div>
       <span class="progress" id="qprog">0 of 7 answered</span>
     </div>
@@ -315,6 +327,10 @@ $("#raw").addEventListener("change",render);
 renderChips(); render();
 
 /* ---------- questionnaire ---------- */
+// WhatsApp number in international format, digits only (no +, spaces or leading 0). Empty = button hidden.
+const WA_NUMBER = "";
+if (WA_NUMBER) $("#wa-row").hidden = false;
+$("#wa").addEventListener("click", e => { if ($("#wa").getAttribute("aria-disabled")==="true") e.preventDefault(); });
 // s = strictness points, flags set raw / whole-food / motive
 const QS = [
   {id:"honey", q:"Do you eat honey?", o:[["Yes",{s:0}],["Not sure",{s:1}],["No, never",{s:2}]]},
@@ -337,7 +353,12 @@ function quizResult(){
   const n = QS.filter(q=>answers[q.id]!==undefined).length;
   $("#qprog").textContent = `${n} of ${QS.length} answered`;
   const box = $("#qresult");
-  if (n < QS.length) { box.hidden = true; return; }
+  const wa = $("#wa");
+  if (n < QS.length) {
+    box.hidden = true; wa.setAttribute("aria-disabled","true"); wa.href = "#";
+    $("#wa-hint").textContent = `Answer all ${QS.length} questions first.`;
+    return;
+  }
   let s=0, max=0, raw=0, wf=0;
   for (const q of QS){
     const v = q.o[answers[q.id]][1];
@@ -374,6 +395,11 @@ function quizResult(){
     <div class="qbtns">${raw===2?`<button type="button" class="qbtn primary" id="q-apply">Show raw foods only</button>`:""}
     <button type="button" class="qbtn" id="q-reset">Start again</button></div>`;
   box.hidden = false;
+  const msg = ["Strictly Plant: my answers", "Result: " + badges.join(" · "), "",
+    ...QS.map((q,i)=>`${i+1}. ${q.q} ${q.o[answers[q.id]][0]}`)].join("\n");
+  wa.href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
+  wa.setAttribute("aria-disabled","false");
+  $("#wa-hint").textContent = "Opens WhatsApp with your answers. Press Send there.";
 }
 $("#qform").addEventListener("change",e=>{
   const t=e.target; if(t.type!=="radio") return;
