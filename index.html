@@ -101,7 +101,10 @@ dd{margin:3px 0 0;font-size:.95rem;color:var(--muted)}
 .wa-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:12px}
 .wa{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:.95rem;padding:9px 16px;border-radius:999px;background:#25d366;color:#0b1f12;text-decoration:none}
 .wa::before{content:"";width:10px;height:10px;border-radius:50%;background:#0b1f12}
-.wa[aria-disabled="true"]{opacity:.45;cursor:not-allowed}
+.wa[data-ready="false"]{background:#1f6b3d;color:#d7f5e2}
+.wa[data-ready="false"]::before{background:#d7f5e2}
+fieldset.q.flag legend{color:var(--accent)}
+fieldset.q.flag .opt span{border-color:var(--accent)}
 .wa:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .wa-hint{font-size:.88rem;color:var(--muted)}
 .progress{font-size:.9rem;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -143,7 +146,7 @@ mark{background:var(--accent-soft);color:inherit;border-radius:3px;padding:0 1px
       <div>
         <h2 id="quiz-title">What kind of vegan are we cooking for?</h2>
         <div class="wa-row" id="wa-row" hidden>
-          <a class="wa" id="wa" href="#" target="_blank" rel="noopener" aria-disabled="true">Send my answers on WhatsApp</a>
+          <a class="wa" id="wa" href="#" target="_blank" rel="noopener" data-ready="false">Send to Dad</a>
           <span class="wa-hint" id="wa-hint">Answer all 7 questions first.</span>
         </div>
       </div>
@@ -330,7 +333,14 @@ renderChips(); render();
 // WhatsApp number in international format, digits only (no +, spaces or leading 0). Empty = button hidden.
 const WA_NUMBER = "34674448942";
 if (WA_NUMBER) $("#wa-row").hidden = false;
-$("#wa").addEventListener("click", e => { if ($("#wa").getAttribute("aria-disabled")==="true") e.preventDefault(); });
+$("#wa").addEventListener("click", e => {
+  if ($("#wa").dataset.ready === "true") return;
+  e.preventDefault();
+  const i = QS.findIndex(q => answers[q.id] === undefined);
+  const fs = document.querySelectorAll("#qform fieldset")[i];
+  $("#wa-hint").textContent = `Please answer question ${i+1} first.`;
+  if (fs) { fs.classList.add("flag"); fs.scrollIntoView({behavior:"smooth", block:"center"}); setTimeout(()=>fs.classList.remove("flag"), 2500); }
+});
 // s = strictness points, flags set raw / whole-food / motive
 const QS = [
   {id:"honey", q:"Do you eat honey?", o:[["Yes",{s:0}],["Not sure",{s:1}],["No, never",{s:2}]]},
@@ -355,7 +365,7 @@ function quizResult(){
   const box = $("#qresult");
   const wa = $("#wa");
   if (n < QS.length) {
-    box.hidden = true; wa.setAttribute("aria-disabled","true"); wa.href = "#";
+    box.hidden = true; wa.dataset.ready = "false"; wa.href = "#";
     $("#wa-hint").textContent = `Answer all ${QS.length} questions first.`;
     return;
   }
@@ -398,7 +408,7 @@ function quizResult(){
   const msg = ["Strictly Plant: my answers", "Result: " + badges.join(" · "), "",
     ...QS.map((q,i)=>`${i+1}. ${q.q} ${q.o[answers[q.id]][0]}`)].join("\n");
   wa.href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
-  wa.setAttribute("aria-disabled","false");
+  wa.dataset.ready = "true";
   $("#wa-hint").textContent = "Opens WhatsApp with your answers. Press Send there.";
 }
 $("#qform").addEventListener("change",e=>{
