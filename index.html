@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Strictly Plant</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: control bar on top, then a masonry-ish grid of category panels, then three reference panels (label traps, hidden additives, nutrients). */
+:root{
+  --bg:#f3f6f1; --surface:#ffffff; --ink:#18261d; --muted:#5d6b61; --line:#d9e2d8;
+  --accent:#a3245a; --accent-soft:#f6e3ec;
+  --ok:#2f7d4a; --ok-soft:#e1f1e6; --warn:#a86a00; --warn-soft:#fbefd6; --bad:#b3261e; --bad-soft:#f9e1df;
+  --chip:#eef2ec;
+  /* category colours: each card sets --h (hue); these set strength per theme */
+  --cat-s:55%; --cat-ink:30%; --cat-soft:93%; --cat-line:80%;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Inter",ui-sans-serif,system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111813; --surface:#18221b; --ink:#e4ece5; --muted:#9aab9e; --line:#2b3a2f;
+  --accent:#e8789f; --accent-soft:#3a1a28;
+  --ok:#72c58f; --ok-soft:#1c3324; --warn:#e3b25a; --warn-soft:#3a2d12; --bad:#f08a80; --bad-soft:#3d1c19;
+  --chip:#223026; --cat-s:45%; --cat-ink:76%; --cat-soft:19%; --cat-line:32%; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111813; --surface:#18221b; --ink:#e4ece5; --muted:#9aab9e; --line:#2b3a2f;
+  --accent:#e8789f; --accent-soft:#3a1a28;
+  --ok:#72c58f; --ok-soft:#1c3324; --warn:#e3b25a; --warn-soft:#3a2d12; --bad:#f08a80; --bad-soft:#3d1c19;
+  --chip:#223026; --cat-s:45%; --cat-ink:76%; --cat-soft:19%; --cat-line:32%; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6}
+.wrap{max-width:1180px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;letter-spacing:-.02em;line-height:1.05}
+h2{font-size:1.45rem;font-weight:800;letter-spacing:-.01em}
+h3{font-size:1.1rem;font-weight:600}
+.eyebrow{font-size:.75rem;text-transform:uppercase;letter-spacing:.09em;color:var(--accent);font-weight:600}
+header{display:grid;gap:10px}
+header p{margin:0;max-width:65ch;color:var(--muted)}
+.stats{display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:6px}
+.stat{display:flex;align-items:baseline;gap:8px}
+.stat b{font-family:var(--display);font-size:1.6rem;font-weight:800;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:.9rem}
+.controls{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;border-bottom:1px solid var(--line);display:grid;gap:10px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+input[type=search]{flex:1 1 240px;min-width:0;font:inherit;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+input[type=search]:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.toggle{display:flex;align-items:center;gap:8px;font-weight:500;cursor:pointer;user-select:none;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface)}
+.toggle input{accent-color:var(--accent);width:16px;height:16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{--h:150;flex:none;font:inherit;font-size:.92rem;font-weight:600;padding:7px 14px;border-radius:999px;border:1.5px solid hsl(var(--h) var(--cat-s) var(--cat-line));background:var(--surface);color:hsl(var(--h) var(--cat-s) var(--cat-ink));cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.chip::before{content:"";width:10px;height:10px;border-radius:50%;background:hsl(var(--h) var(--cat-s) var(--cat-ink))}
+.chip.all{color:var(--ink);border-color:var(--line)}
+.chip.all::before{display:none}
+.chip[aria-pressed="true"]{background:hsl(var(--h) var(--cat-s) var(--cat-soft));border-color:hsl(var(--h) var(--cat-s) var(--cat-ink))}
+.chip.all[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.88rem;color:var(--muted)}
+.grid{columns:3 340px;column-gap:22px}
+.cat{break-inside:avoid;margin:0 0 22px;background:var(--surface);border:1.5px solid hsl(var(--h) var(--cat-s) var(--cat-line));border-radius:14px;overflow:hidden;display:grid}
+.cat-top{background:hsl(var(--h) var(--cat-s) var(--cat-soft));padding:14px 18px 12px;display:grid;gap:4px}
+.cat-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.cat h3{font-size:1.3rem;color:hsl(var(--h) var(--cat-s) var(--cat-ink))}
+.count{font-size:.85rem;font-weight:600;color:hsl(var(--h) var(--cat-s) var(--cat-ink));font-variant-numeric:tabular-nums}
+.cat p.note{margin:0;font-size:.92rem;color:var(--ink);opacity:.8}
+ul.items{list-style:none;margin:0;padding:4px 18px 8px;display:grid}
+ul.items li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+ul.items li:first-child{border-top:0}
+.name{min-width:0;font-weight:500}
+.tags{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.tag{font-size:.78rem;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--chip);color:var(--muted);white-space:nowrap}
+.tag.raw{background:var(--ok-soft);color:var(--ok)}
+.tag.check{background:var(--warn-soft);color:var(--warn)}
+.empty{color:var(--muted);padding:20px 0}
+.ref{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:12px;align-content:start;min-width:0}
+.panel.warn{border-top:4px solid var(--warn)}
+.panel.bad{border-top:4px solid var(--bad)}
+.panel.nut{border-top:4px solid var(--accent)}
+.panel p{margin:0;color:var(--muted);font-size:.9rem}
+dl{margin:0;display:grid;gap:0}
+dl div{padding:8px 0;border-top:1px solid var(--line)}
+dl div:first-child{border-top:0}
+dt{font-weight:600}
+dl div{padding:11px 0}
+dd{margin:3px 0 0;font-size:.95rem;color:var(--muted)}
+.code{font-variant-numeric:tabular-nums;font-weight:600;color:var(--bad);margin-right:6px}
+.pri{display:inline-block;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 6px;border-radius:5px;margin-left:6px;vertical-align:2px}
+.pri.must{background:var(--bad-soft);color:var(--bad)}
+.pri.watch{background:var(--warn-soft);color:var(--warn)}
+footer{font-size:.8rem;color:var(--muted);max-width:75ch}
+mark{background:var(--accent-soft);color:inherit;border-radius:3px;padding:0 1px}
+@media (prefers-reduced-motion:no-preference){.chip,.toggle{transition:background .15s,color .15s}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Strict vegan · no honey, no hidden animal additives</div>
+    <h1>Strictly Plant</h1>
+    <p>Everything on the category lists is plant-only. Tick <b>Raw only</b> for a raw-vegan view. The three panels at the bottom cover the foods that need a label check, the additives that are never vegan, and the nutrients a strict plant diet has to cover on purpose.</p>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <div class="controls">
+    <div class="row">
+      <input type="search" id="q" placeholder="Search a food, e.g. tempeh, lentils, kale" aria-label="Search foods">
+      <label class="toggle" for="raw"><input type="checkbox" id="raw"> Raw only</label>
+    </div>
+    <div class="chips" id="chips" role="toolbar" aria-label="Filter by category"></div>
+    <div class="legend">
+      <span><span class="tag raw">raw</span> fine uncooked</span>
+      <span><span class="tag">protein</span> <span class="tag">calcium</span> <span class="tag">iron</span> <span class="tag">omega-3</span> notable source</span>
+      <span><span class="tag check">check</span> some brands are not vegan</span>
+    </div>
+  </div>
+
+  <section class="grid" id="grid" aria-live="polite"></section>
+
+  <section class="ref">
+    <div class="panel warn">
+      <div class="eyebrow" style="color:var(--warn)">Read the label</div>
+      <h2>Often not vegan</h2>
+      <p>Plant-sounding foods that frequently hide an animal ingredient or process.</p>
+      <dl id="traps"></dl>
+    </div>
+    <div class="panel bad">
+      <div class="eyebrow" style="color:var(--bad)">Never vegan / ask</div>
+      <h2>Hidden additives</h2>
+      <p>E-numbers and ingredient names to reject, or to check the source of.</p>
+      <dl id="additives"></dl>
+    </div>
+    <div class="panel nut">
+      <div class="eyebrow">Cover on purpose</div>
+      <h2>Nutrients to plan</h2>
+      <p>The gaps a strict plant diet does not fill by accident.</p>
+      <dl id="nutrients"></dl>
+    </div>
+  </section>
+
+  <footer>General food information, not medical advice. A strict vegan diet, especially for children, pregnancy or athletes, is worth checking with a doctor or registered dietitian, and B12 is not optional.</footer>
+</div>
+
+<script>
+const CATS = [
+  {id:"veg", name:"Vegetables", note:"Dark leafy greens are the calcium and iron backbone.", items:[
+    ["Kale","raw calcium iron"],["Broccoli","raw calcium"],["Spinach","raw iron"],["Bok choy","raw calcium"],
+    ["Carrots","raw"],["Beetroot","raw"],["Sweet potato",""],["Bell peppers","raw"],["Tomatoes","raw"],
+    ["Cauliflower","raw"],["Mushrooms",""],["Courgette","raw"],["Brussels sprouts","iron"],["Seaweed (nori, wakame)","raw"]]},
+  {id:"fruit", name:"Fruit", note:"All fresh fruit is vegan. Dried fruit can carry a shellac glaze.", items:[
+    ["Bananas","raw"],["Berries","raw"],["Oranges","raw"],["Apples","raw"],["Avocado","raw"],
+    ["Mango","raw"],["Dates","raw"],["Figs","raw calcium"],["Dried apricots","raw iron check"],["Kiwi","raw"],["Pomegranate","raw"]]},
+  {id:"legumes", name:"Legumes & pulses", note:"The main protein, iron and zinc source. Soak and cook dried beans.", items:[
+    ["Lentils (red, green, black)","protein iron"],["Chickpeas","protein iron"],["Black beans","protein iron"],
+    ["Kidney beans","protein iron"],["Edamame","protein"],["Split peas","protein"],["Mung beans / sprouts","raw protein"],
+    ["White beans","protein calcium"],["Peanuts","protein"]]},
+  {id:"soy", name:"Soy & meat alternatives", note:"Calcium-set tofu is one of the best plant calcium sources.", items:[
+    ["Tofu (calcium-set)","protein calcium iron"],["Tempeh","protein iron"],["Seitan","protein"],["Textured soy protein","protein"],
+    ["Pea-protein burgers","protein check"],["Jackfruit (young)",""],["Lupin flakes","protein"]]},
+  {id:"grains", name:"Grains & starches", note:"Most plain grains are fine. Breads and pasta need a label check.", items:[
+    ["Oats","iron"],["Quinoa","protein iron"],["Brown rice",""],["Buckwheat","raw"],["Barley",""],["Millet",""],
+    ["Whole-wheat pasta (egg-free)","check"],["Sourdough bread","check"],["Potatoes",""],["Corn tortillas","check"]]},
+  {id:"nuts", name:"Nuts & seeds", note:"Small handfuls cover zinc, selenium and plant omega-3.", items:[
+    ["Almonds","raw calcium protein"],["Walnuts","raw omega-3"],["Chia seeds","raw omega-3 calcium"],["Ground flaxseed","raw omega-3"],
+    ["Hemp seeds","raw protein omega-3"],["Pumpkin seeds","raw iron protein"],["Sesame / tahini","raw calcium"],["Brazil nuts","raw"],
+    ["Cashews","raw"],["Sunflower seeds","raw"]]},
+  {id:"dairyalt", name:"Dairy alternatives", note:"Pick fortified versions for calcium, B12 and vitamin D.", items:[
+    ["Soy milk (fortified)","protein calcium"],["Oat milk (fortified)","calcium"],["Coconut yoghurt","check"],["Soy yoghurt","protein calcium"],
+    ["Cashew cheese","raw"],["Plant butter","check"],["Coconut cream",""]]},
+  {id:"fats", name:"Fats & oils", note:"Butter, lard, ghee and suet are out.", items:[
+    ["Olive oil","raw"],["Rapeseed / canola oil","omega-3"],["Flaxseed oil","raw omega-3"],["Coconut oil","raw"],["Avocado oil","raw"],["Algae oil (EPA/DHA)","omega-3"]]},
+  {id:"sweet", name:"Sweeteners", note:"Honey is not vegan. Some cane sugar is filtered through bone char.", items:[
+    ["Maple syrup",""],["Agave syrup","raw"],["Date syrup","raw"],["Beet sugar",""],["Coconut sugar",""],
+    ["Organic cane sugar",""],["Blackstrap molasses","iron calcium"],["Rice syrup",""],["Dark chocolate (dairy-free)","iron check"]]},
+  {id:"flavour", name:"Flavour & condiments", note:"Watch Worcestershire (anchovy) and fish sauce.", items:[
+    ["Nutritional yeast (B12-fortified)","protein"],["Miso","protein"],["Tamari / soy sauce",""],["Mustard","check"],
+    ["Vegan mayo","check"],["Herbs & spices","raw"],["Vinegar",""],["Kimchi (no fish sauce)","raw check"],["Sauerkraut","raw"]]},
+  {id:"drinks", name:"Drinks", note:"Wine and beer can be fined with gelatin, isinglass or egg white.", items:[
+    ["Water, tea, coffee",""],["Fresh juice","raw"],["Kombucha","raw"],["Wine (labelled vegan)","check"],["Beer (labelled vegan)","check"],["Plant protein shake","protein check"]]}
+];
+const TRAPS = [
+  ["Bread & baked goods","Milk, butter, eggs, whey, or L-cysteine (E920) as a dough improver."],
+  ["White & brown cane sugar","May be filtered through bone char. Beet sugar and certified-organic sugar are not."],
+  ["Wine & beer","Fined with gelatin, isinglass (fish bladder), egg white or casein. Look for a vegan mark."],
+  ["Crisps & snacks","Whey, milk powder, cheese flavouring, or chicken/beef flavour."],
+  ["Red sweets & yoghurts","Carmine colour (E120) from insects; gelatin in gummies."],
+  ["Shiny sweets & glazed fruit","Shellac (E904) or beeswax (E901) glaze."],
+  ["Orange juice with omega-3","Omega-3 from fish oil; vitamin D3 from lanolin."],
+  ["Pesto, Caesar dressing, Worcestershire","Parmesan (animal rennet) and anchovy."],
+  ["Refried beans, pie crusts, tortillas","Lard."],
+  ["Thai & Vietnamese dishes","Fish sauce, shrimp paste."]
+];
+const ADDITIVES = [
+  ["E120","Carmine / cochineal","Crushed insects. Red colour."],
+  ["E441","Gelatin","Animal bones and skin."],
+  ["E542","Edible bone phosphate","Animal bones."],
+  ["E901","Beeswax","Bee product; glazing agent."],
+  ["E904","Shellac","Lac insect resin; glazing agent."],
+  ["E913","Lanolin","Sheep's wool grease; source of most vitamin D3."],
+  ["E966","Lactitol","Made from milk sugar."],
+  ["E1105","Lysozyme","Egg white enzyme."],
+  ["","Casein, whey, lactose","Milk proteins and sugar."],
+  ["","Albumen, isinglass, honey, royal jelly","Egg, fish, bee products."],
+  ["E920","L-cysteine","Ask: often from feathers or hair, sometimes synthetic."],
+  ["E471","Mono- and diglycerides","Ask: can be animal fat or plant oil."],
+  ["E322","Lecithin","Ask: usually soy or sunflower, sometimes egg."],
+  ["E631 / E627","Inosinate / guanylate","Ask: can come from meat or fish."]
+];
+const NUTRIENTS = [
+  ["Vitamin B12","must","No reliable plant source. Take a supplement or eat fortified foods daily."],
+  ["Vitamin D","watch","Sun in summer; in winter a D2 or lichen-based D3 supplement (standard D3 is from lanolin)."],
+  ["Omega-3 (EPA/DHA)","watch","Flax, chia, walnuts give ALA; algae oil gives EPA/DHA directly."],
+  ["Iodine","watch","Iodised salt or a supplement. Seaweed varies too much to rely on."],
+  ["Calcium","watch","Calcium-set tofu, fortified plant milk, kale, bok choy, tahini, almonds."],
+  ["Iron","watch","Legumes, tofu, pumpkin seeds, oats. Eat with vitamin C to absorb more."],
+  ["Zinc","watch","Legumes, seeds, nuts, oats. Soaking and sprouting help absorption."],
+  ["Protein","watch","Legumes, soy, seitan, quinoa, hemp. Mix sources across the day."]
+];
+
+const HUE = {veg:140, fruit:345, legumes:22, soy:45, grains:75, nuts:285, dairyalt:195, fats:165, sweet:320, flavour:255, drinks:222};
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let active = "all";
+try { active = localStorage.getItem("sp-cat") || "all"; } catch(e){}
+if (active !== "all" && !CATS.some(c => c.id === active)) active = "all";
+
+const total = CATS.reduce((n,c)=>n+c.items.length,0);
+const rawN = CATS.reduce((n,c)=>n+c.items.filter(i=>i[1].split(" ").includes("raw")).length,0);
+$("#stats").innerHTML = [
+  [total,"plant foods"],[CATS.length,"categories"],[rawN,"raw-friendly"],[ADDITIVES.length,"additives to watch"]
+].map(([n,l])=>`<div class="stat"><b>${n}</b><span>${l}</span></div>`).join("");
+
+function renderChips(){
+  const all = [{id:"all",name:"All"}, ...CATS];
+  $("#chips").innerHTML = all.map(c=>`<button class="chip${c.id==="all"?" all":""}" style="--h:${HUE[c.id]??150}" id="chip-${c.id}" data-id="${c.id}" aria-pressed="${c.id===active}">${esc(c.name)}</button>`).join("");
+}
+function hl(text,q){
+  if(!q) return esc(text);
+  const i = text.toLowerCase().indexOf(q);
+  if(i<0) return esc(text);
+  return esc(text.slice(0,i))+"<mark>"+esc(text.slice(i,i+q.length))+"</mark>"+esc(text.slice(i+q.length));
+}
+function render(){
+  const q = $("#q").value.trim().toLowerCase();
+  const rawOnly = $("#raw").checked;
+  let html = "", shown = 0;
+  for(const c of CATS){
+    if(active!=="all" && c.id!==active) continue;
+    const items = c.items.filter(([n,t])=>{
+      const tags = t.split(" ").filter(Boolean);
+      if(rawOnly && !tags.includes("raw")) return false;
+      if(q && !n.toLowerCase().includes(q) && !tags.some(x=>x.includes(q))) return false;
+      return true;
+    });
+    if(!items.length) continue;
+    shown += items.length;
+    html += `<article class="cat" style="--h:${HUE[c.id]}"><div class="cat-top"><div class="cat-head"><h3>${esc(c.name)}</h3><span class="count">${items.length} foods</span></div>
+      <p class="note">${esc(c.note)}</p></div><ul class="items">${items.map(([n,t])=>{
+        const tags=t.split(" ").filter(Boolean);
+        return `<li><span class="name">${hl(n,q)}</span><span class="tags">${tags.map(x=>`<span class="tag ${x}">${x}</span>`).join("")}</span></li>`;
+      }).join("")}</ul></article>`;
+  }
+  $("#grid").innerHTML = shown ? html : `<p class="empty">No plant foods match. Try another word, or switch off Raw only.</p>`;
+}
+$("#traps").innerHTML = TRAPS.map(([t,d])=>`<div><dt>${esc(t)}</dt><dd>${esc(d)}</dd></div>`).join("");
+$("#additives").innerHTML = ADDITIVES.map(([c,n,d])=>`<div><dt>${c?`<span class="code">${c}</span>`:""}${esc(n)}</dt><dd>${esc(d)}</dd></div>`).join("");
+$("#nutrients").innerHTML = NUTRIENTS.map(([n,p,d])=>`<div><dt>${esc(n)}<span class="pri ${p}">${p==="must"?"supplement":"plan"}</span></dt><dd>${esc(d)}</dd></div>`).join("");
+
+$("#chips").addEventListener("click",e=>{
+  const b=e.target.closest(".chip"); if(!b) return;
+  active=b.dataset.id; try{localStorage.setItem("sp-cat",active)}catch(err){}
+  renderChips(); render();
+});
+$("#q").addEventListener("input",render);
+$("#raw").addEventListener("change",render);
+renderChips(); render();
+</script>
+</body>
+</html>
