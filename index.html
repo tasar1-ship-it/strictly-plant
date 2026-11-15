@@ -39,6 +39,9 @@ header p{margin:0;max-width:65ch;color:var(--muted)}
 .stat b{font-family:var(--display);font-size:1.6rem;font-weight:800;font-variant-numeric:tabular-nums}
 .stat span{color:var(--muted);font-size:.9rem}
 .controls{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;border-bottom:1px solid var(--line);display:grid;gap:10px}
+/* on phones the full control bar would cover most of the screen, so it scrolls away instead of sticking */
+@media (max-width:700px),(max-height:500px){.controls{position:static}}
+.sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 input[type=search]{flex:1 1 240px;min-width:0;font:inherit;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
@@ -169,7 +172,8 @@ mark{background:var(--accent-soft);color:inherit;border-radius:3px;padding:0 1px
     </div>
   </div>
 
-  <section class="grid" id="grid" aria-live="polite"></section>
+  <p class="sr" id="shown" aria-live="polite"></p>
+  <section class="grid" id="grid"></section>
 
   <section class="ref">
     <div class="panel warn">
@@ -201,12 +205,12 @@ const CATS = [
     ["Kale","raw calcium iron"],["Broccoli","raw calcium"],["Spinach","raw iron"],["Bok choy","raw calcium"],
     ["Carrots","raw"],["Beetroot","raw"],["Sweet potato",""],["Bell peppers","raw"],["Tomatoes","raw"],
     ["Cauliflower","raw"],["Mushrooms",""],["Courgette","raw"],["Brussels sprouts","iron"],["Seaweed (nori, wakame)","raw"]]},
-  {id:"fruit", name:"Fruit", note:"All fresh fruit is vegan. Dried fruit can carry a shellac glaze.", items:[
+  {id:"fruit", name:"Fruit", note:"Fresh fruit is vegan, but citrus, apples and pears can be waxed with shellac or beeswax: buy unwaxed or peel. Dried fruit can carry a glaze too.", items:[
     ["Bananas","raw"],["Berries","raw"],["Oranges","raw"],["Apples","raw"],["Avocado","raw"],
     ["Mango","raw"],["Dates","raw"],["Figs","raw calcium"],["Dried apricots","raw iron check"],["Kiwi","raw"],["Pomegranate","raw"]]},
-  {id:"legumes", name:"Legumes & pulses", note:"The main protein, iron and zinc source. Soak and cook dried beans.", items:[
+  {id:"legumes", name:"Legumes & pulses", note:"The main protein, iron and zinc source. Soak and cook dried beans. Eat bean sprouts raw only if labelled ready to eat.", items:[
     ["Lentils (red, green, black)","protein iron"],["Chickpeas","protein iron"],["Black beans","protein iron"],
-    ["Kidney beans","protein iron"],["Edamame","protein"],["Split peas","protein"],["Mung beans / sprouts","raw protein"],
+    ["Kidney beans","protein iron"],["Edamame","protein"],["Split peas","protein"],["Mung beans","protein"],["Bean sprouts (ready-to-eat)","raw"],
     ["White beans","protein calcium"],["Peanuts","protein"]]},
   {id:"soy", name:"Soy & meat alternatives", note:"Calcium-set tofu is one of the best plant calcium sources.", items:[
     ["Tofu (calcium-set)","protein calcium iron"],["Tempeh","protein iron"],["Seitan","protein"],["Textured soy protein","protein"],
@@ -261,7 +265,7 @@ const ADDITIVES = [
   ["E631 / E627","Inosinate / guanylate","Ask: can come from meat or fish."]
 ];
 const NUTRIENTS = [
-  ["Vitamin B12","must","No reliable plant source. Take a supplement or eat fortified foods daily."],
+  ["Vitamin B12","must","No reliable plant source. Supplement 10 µg a day or 2000 µg a week, or eat B12-fortified foods two to three times a day."],
   ["Vitamin D","watch","Sun in summer; in winter a D2 or lichen-based D3 supplement (standard D3 is from lanolin)."],
   ["Omega-3 (EPA/DHA)","watch","Flax, chia, walnuts give ALA; algae oil gives EPA/DHA directly."],
   ["Iodine","watch","Iodised salt or a supplement. Seaweed varies too much to rely on."],
@@ -294,7 +298,7 @@ function hl(text,q){
   if(i<0) return esc(text);
   return esc(text.slice(0,i))+"<mark>"+esc(text.slice(i,i+q.length))+"</mark>"+esc(text.slice(i+q.length));
 }
-function render(){
+function render(announce){
   const q = $("#q").value.trim().toLowerCase();
   const rawOnly = $("#raw").checked;
   let html = "", shown = 0;
@@ -315,6 +319,7 @@ function render(){
       }).join("")}</ul></article>`;
   }
   $("#grid").innerHTML = shown ? html : `<p class="empty">No plant foods match. Try another word, or switch off Raw only.</p>`;
+  if (announce === true) $("#shown").textContent = `${shown} ${shown===1?"food":"foods"} shown`;
 }
 $("#traps").innerHTML = TRAPS.map(([t,d])=>`<div><dt>${esc(t)}</dt><dd>${esc(d)}</dd></div>`).join("");
 $("#additives").innerHTML = ADDITIVES.map(([c,n,d])=>`<div><dt>${c?`<span class="code">${c}</span>`:""}${esc(n)}</dt><dd>${esc(d)}</dd></div>`).join("");
@@ -323,10 +328,10 @@ $("#nutrients").innerHTML = NUTRIENTS.map(([n,p,d])=>`<div><dt>${esc(n)}<span cl
 $("#chips").addEventListener("click",e=>{
   const b=e.target.closest(".chip"); if(!b) return;
   active=b.dataset.id; try{localStorage.setItem("sp-cat",active)}catch(err){}
-  renderChips(); render();
+  renderChips(); render(true);
 });
-$("#q").addEventListener("input",render);
-$("#raw").addEventListener("change",render);
+$("#q").addEventListener("input",()=>render(true));
+$("#raw").addEventListener("change",()=>render(true));
 renderChips(); render();
 
 /* ---------- questionnaire ---------- */
@@ -379,26 +384,33 @@ function quizResult(){
   let type, tips;
   if (pct >= .75){
     type = "Strict ethical vegan";
-    tips = ["No honey anywhere, including dressings and glazes.",
-            "Read every label: watch the additives list at the bottom of this page.",
-            "Serve only wine or beer marked vegan; use beet or organic sugar.",
-            "Keep their food apart from meat and dairy pans and utensils."];
+    tips = ["Keep their food apart from meat and dairy pans and utensils.",
+            "Use beet or organic sugar."];
   } else if (pct >= .35){
     type = "Dietary vegan";
-    tips = ["No meat, fish, dairy or eggs on the plate.",
-            "Obvious ingredients matter most; traces are usually fine.",
-            "Ask once about honey and wine rather than guessing."];
+    tips = ["No meat, fish, dairy or eggs on the plate."];
   } else {
     type = "Plant-based, flexible";
-    tips = ["Cook plant-based meals; small hidden traces are not a problem.",
-            "Honey and ordinary wine are usually fine.",
-            "Focus on a satisfying meal: beans, tofu or tempeh for protein."];
+    tips = raw===2
+      ? ["Prepare plant-based food: no meat, fish, dairy or eggs on the plate.",
+         "Focus on a satisfying meal: nuts, seeds, avocado and fruit."]
+      : ["Cook plant-based meals: no meat, fish, dairy or eggs on the plate.",
+         "Focus on a satisfying meal: beans, tofu or tempeh for protein."];
   }
+  // tips that follow the guest's own answers, so they never contradict them
+  const A = id => answers[id];
+  tips.unshift(
+    ["Honey is fine for them.", "Ask before using honey.", "No honey anywhere, including dressings and glazes."][A("honey")],
+    [null, "Check labels for the obvious animal ingredients (milk, egg, gelatin).", "Read every label: watch the additives list at the bottom of this page."][A("labels")],
+    ["\"May contain milk or egg\" traces are fine.", "Avoid products labelled \"may contain milk or egg\" where you easily can.", "No products labelled \"may contain milk or egg\"."][A("traces")],
+    ["Any wine or beer is fine.", "Serve only wine or beer marked vegan.", null][A("wine")]
+  );
+  tips = tips.filter(Boolean);
   const badges = [type];
-  if (raw===2){ badges.push("Fully raw"); tips.push("Serve nothing heated: salads, sprouts, nuts, fruit, raw sauces. The Raw only filter shows what works."); }
+  if (raw===2){ badges.push("Fully raw"); tips.push("Serve nothing heated: salads, nuts, fruit, raw sauces. The Raw only filter shows what works."); }
   else if (raw===1){ badges.push("High-raw"); tips.push("Lead with raw dishes; a cooked side is usually fine."); }
-  if (wf===2){ badges.push("Whole-food, no oil"); tips.push("No added oil and no ready-made vegan products: steam, bake or sauté in water."); }
-  else if (wf===1){ badges.push("Whole-food leaning"); tips.push("Prefer beans, grains and vegetables over vegan burgers and plant cheese."); }
+  if (wf===2){ badges.push("Whole-food, no oil"); tips.push(raw===2 ? "No added oil and no ready-made vegan products: dress with tahini, avocado or citrus instead." : "No added oil and no ready-made vegan products: steam, bake or sauté in water."); }
+  else if (wf===1){ badges.push("Whole-food leaning"); tips.push(raw===2 ? "Prefer whole fruit, vegetables, nuts and seeds over plant cheese and ready-made products." : "Prefer beans, grains and vegetables over vegan burgers and plant cheese."); }
   box.innerHTML = `<div class="badges">${badges.map(b=>`<b>${esc(b)}</b>`).join("")}</div>
     <h3>${esc(badges.join(" · "))}</h3>
     <ul>${tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>
@@ -423,7 +435,7 @@ $("#qresult").addEventListener("click",e=>{
     document.querySelectorAll("#qform input").forEach(i=>i.checked=false); quizResult(); $("#quiz").scrollIntoView({behavior:"smooth",block:"start"});
   }
   if(e.target.id==="q-apply"){
-    $("#raw").checked=true; render(); $("#grid").scrollIntoView({behavior:"smooth",block:"start"});
+    $("#raw").checked=true; render(true); $("#grid").scrollIntoView({behavior:"smooth",block:"start"});
   }
 });
 quizResult();
