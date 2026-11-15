@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Strictly Plant</title>
+<title>Strictly Planned for Till and Erin</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&display=swap">
@@ -16,6 +16,7 @@
   --chip:#eef2ec;
   /* category colours: each card sets --h (hue); these set strength per theme */
   --cat-s:55%; --cat-ink:30%; --cat-soft:93%; --cat-line:80%;
+  --tag-s:62%; --tag-l:36%; --tag-l-check:34%; --tag-fg:#ffffff;
   --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
   --body:"Inter",ui-sans-serif,system-ui,-apple-system,sans-serif;
 }
@@ -23,12 +24,27 @@
   --bg:#111813; --surface:#18221b; --ink:#e4ece5; --muted:#9aab9e; --line:#2b3a2f;
   --accent:#e8789f; --accent-soft:#3a1a28;
   --ok:#72c58f; --ok-soft:#1c3324; --warn:#e3b25a; --warn-soft:#3a2d12; --bad:#f08a80; --bad-soft:#3d1c19;
-  --chip:#223026; --cat-s:45%; --cat-ink:76%; --cat-soft:19%; --cat-line:32%; color-scheme:dark}}
+  --chip:#223026; --cat-s:45%; --cat-ink:76%; --cat-soft:19%; --cat-line:32%; --tag-s:70%; --tag-l:70%; --tag-l-check:66%; --tag-fg:#0d120e; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#111813; --surface:#18221b; --ink:#e4ece5; --muted:#9aab9e; --line:#2b3a2f;
   --accent:#e8789f; --accent-soft:#3a1a28;
   --ok:#72c58f; --ok-soft:#1c3324; --warn:#e3b25a; --warn-soft:#3a2d12; --bad:#f08a80; --bad-soft:#3d1c19;
-  --chip:#223026; --cat-s:45%; --cat-ink:76%; --cat-soft:19%; --cat-line:32%; color-scheme:dark}
+  --chip:#223026; --cat-s:45%; --cat-ink:76%; --cat-soft:19%; --cat-line:32%; --tag-s:70%; --tag-l:70%; --tag-l-check:66%; --tag-fg:#0d120e; color-scheme:dark}
+/* Background choices: data-mode sets the full light or dark set, data-bg then sets the ground colours */
+html:root[data-mode="light"]{
+  --ink:#18261d; --muted:#4f5d53; --accent:#a3245a; --accent-soft:#f6e3ec;
+  --ok:#2f7d4a; --ok-soft:#e1f1e6; --warn:#a86a00; --warn-soft:#fbefd6; --bad:#b3261e; --bad-soft:#f9e1df;
+  --cat-s:55%; --cat-ink:30%; --cat-soft:93%; --cat-line:80%; --tag-s:62%; --tag-l:36%; --tag-l-check:34%; --tag-fg:#ffffff; color-scheme:light}
+html:root[data-mode="dark"]{
+  --ink:#e8eee9; --muted:#a3b2a7; --accent:#e8789f; --accent-soft:#3a1a28;
+  --ok:#72c58f; --ok-soft:#1c3324; --warn:#e3b25a; --warn-soft:#3a2d12; --bad:#f08a80; --bad-soft:#3d1c19;
+  --cat-s:45%; --cat-ink:76%; --cat-soft:19%; --cat-line:32%; --tag-s:70%; --tag-l:70%; --tag-l-check:66%; --tag-fg:#0d120e; color-scheme:dark}
+html:root[data-bg="mint"]{--bg:#e9f5ee; --surface:#ffffff; --line:#cfe3d6; --chip:#e4efe8}
+html:root[data-bg="sky"]{--bg:#eaf1fa; --surface:#ffffff; --line:#d2deec; --chip:#e6edf6}
+html:root[data-bg="blush"]{--bg:#fbeef0; --surface:#ffffff; --line:#efd6db; --chip:#f6e6e9}
+html:root[data-bg="navy"]{--bg:#0f1829; --surface:#18233a; --line:#2a3854; --chip:#222f49; --ink:#e7ecf5; --muted:#a5b1c7}
+html:root[data-bg="charcoal"]{--bg:#18191b; --surface:#232528; --line:#36393e; --chip:#2e3135; --ink:#ececec; --muted:#a9acb1}
+html:root[data-bg="plum"]{--bg:#1d1424; --surface:#281d31; --line:#3d2e49; --chip:#33263e; --ink:#efe8f3; --muted:#b5a7bf}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6}
 .wrap{max-width:1180px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
@@ -71,14 +87,22 @@ ul.items li:first-child{border-top:0}
 .name{min-width:0;font-weight:500}
 .tags{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
 .tag{font-size:.78rem;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--chip);color:var(--muted);white-space:nowrap}
-/* each tag type gets its own hue, same light/dark strengths as the categories */
-.tag.raw,.tag.protein,.tag.calcium,.tag.iron,.tag.omega-3,.tag.check{background:hsl(var(--th) var(--cat-s) var(--cat-soft));color:hsl(var(--th) var(--cat-s) var(--cat-ink));border:1px solid hsl(var(--th) var(--cat-s) var(--cat-line))}
-.tag.raw{--th:150}
-.tag.protein{--th:15}
-.tag.calcium{--th:210}
+/* each tag type: solid fill in its own hue, high-contrast text */
+.tag.raw,.tag.protein,.tag.calcium,.tag.iron,.tag.omega-3,.tag.check{background:hsl(var(--th) var(--tag-s) var(--tag-l));color:var(--tag-fg);font-weight:700;letter-spacing:.01em;padding:3px 10px}
+.tag.raw{--th:135}
+.tag.protein{--th:22}
+.tag.calcium{--th:208}
 .tag.iron{--th:350}
-.tag.omega-3{--th:270}
-.tag.check{--th:40}
+.tag.omega-3{--th:272}
+.tag.check{--th:44; --tag-l:var(--tag-l-check)}
+.tag.check::before{content:"! "}
+.legend{gap:10px 22px;font-size:.95rem;color:var(--ink)}
+.legend > span{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+/* background picker */
+.bgpick{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:.88rem;color:var(--muted)}
+.sw{font:inherit;font-size:.85rem;font-weight:600;display:inline-flex;align-items:center;gap:7px;padding:5px 12px 5px 6px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.sw i{width:18px;height:18px;border-radius:50%;border:1px solid rgba(128,128,128,.5);background:var(--swc)}
+.sw[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
 .empty{color:var(--muted);padding:20px 0}
 .ref{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:12px;align-content:start;min-width:0}
@@ -106,9 +130,10 @@ mark{background:var(--accent-soft);color:inherit;border-radius:3px;padding:0 1px
 <div class="wrap">
   <header>
     <div class="eyebrow">Strict vegan · no honey, no hidden animal additives</div>
-    <h1>Strictly Plant</h1>
+    <h1>Strictly Planned for Till and Erin</h1>
     <p>Everything on the category lists is plant-only. Tick <b>Raw only</b> for a raw-vegan view. The three panels at the bottom cover the foods that need a label check, the additives that are never vegan, and the nutrients a strict plant diet has to cover on purpose.</p>
     <div class="stats" id="stats"></div>
+    <div class="bgpick" id="bgpick" role="group" aria-label="Background colour"><span>Background:</span></div>
   </header>
 
   <div class="controls">
@@ -283,6 +308,28 @@ $("#chips").addEventListener("click",e=>{
 $("#q").addEventListener("input",render);
 $("#raw").addEventListener("change",render);
 renderChips(); render();
+
+const BGS = [
+  ["auto","Automatic",null,"linear-gradient(135deg,#f3f6f1 50%,#111813 50%)"],
+  ["mint","Mint","light","#e9f5ee"],["sky","Sky","light","#eaf1fa"],["blush","Blush","light","#fbeef0"],
+  ["navy","Navy","dark","#0f1829"],["charcoal","Charcoal","dark","#18191b"],["plum","Plum","dark","#1d1424"]
+];
+let bg = "auto";
+try { bg = localStorage.getItem("sp-bg") || "auto"; } catch(e){}
+if (!BGS.some(b=>b[0]===bg)) bg = "auto";
+function applyBg(){
+  const b = BGS.find(x=>x[0]===bg), r = document.documentElement;
+  if (b[2]) { r.dataset.mode = b[2]; r.dataset.bg = b[0]; } else { delete r.dataset.mode; delete r.dataset.bg; }
+  document.querySelectorAll(".sw").forEach(s=>s.setAttribute("aria-pressed", s.dataset.bg===bg));
+}
+$("#bgpick").insertAdjacentHTML("beforeend", BGS.map(([id,name,,sw])=>
+  `<button class="sw" id="bg-${id}" data-bg="${id}" style="--swc:${sw}" aria-pressed="false"><i></i>${name}</button>`).join(""));
+$("#bgpick").addEventListener("click",e=>{
+  const s=e.target.closest(".sw"); if(!s) return;
+  bg=s.dataset.bg; try{localStorage.setItem("sp-bg",bg)}catch(err){}
+  applyBg();
+});
+applyBg();
 </script>
 </body>
 </html>
