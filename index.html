@@ -71,8 +71,14 @@ ul.items li:first-child{border-top:0}
 .name{min-width:0;font-weight:500}
 .tags{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
 .tag{font-size:.78rem;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--chip);color:var(--muted);white-space:nowrap}
-.tag.raw{background:var(--ok-soft);color:var(--ok)}
-.tag.check{background:var(--warn-soft);color:var(--warn)}
+/* each tag type gets its own hue, same light/dark strengths as the categories */
+.tag.raw,.tag.protein,.tag.calcium,.tag.iron,.tag.omega-3,.tag.check{background:hsl(var(--th) var(--cat-s) var(--cat-soft));color:hsl(var(--th) var(--cat-s) var(--cat-ink));border:1px solid hsl(var(--th) var(--cat-s) var(--cat-line))}
+.tag.raw{--th:150}
+.tag.protein{--th:15}
+.tag.calcium{--th:210}
+.tag.iron{--th:350}
+.tag.omega-3{--th:270}
+.tag.check{--th:40}
 .empty{color:var(--muted);padding:20px 0}
 .ref{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:12px;align-content:start;min-width:0}
